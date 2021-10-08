@@ -80,6 +80,12 @@ ul>li{
     
   }
 
+  .hiddenCard{
+
+    
+    display:none;
+  }
+
   .pokeContainer{
     display:flex;
     flex-direction:row;
@@ -111,6 +117,10 @@ li>span{
   
 }
 
+.searchContainer{
+  display:flex;
+}
+
 .statListItem{
   display: flex;
   
@@ -136,4 +146,17 @@ button{
 
 #name{
   color:green;
+}
+
+.type-bar{
+
+border-style: solid none;
+border-width: 1px;
+border-radius: 5px;
+padding: 0.15em;
+font-variant: small-caps;
+font-size: 9pt;
+color: #F8F8F8;
+text-shadow: 0 1px 1px #807870;
+
 }

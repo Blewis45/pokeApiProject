@@ -1,16 +1,17 @@
 
 //let highestStat = [255,190,230,194,230,180];
 
-function getPokemon(){
 
-    
-   
-    let searchTerm = document.getElementById("search");
-    let name = searchTerm.value.toLowerCase();
-    let mvSelect = document.querySelector("select")
+/// When the user presses the search button run this
 
-    console.log(name);
-    fetch('https://pokeapi.co/api/v2/pokemon/'+name)
+
+
+
+
+function changePokemon(pokeName, parentContainer){
+
+    console.log(`${pokeName} container ${parentContainer}`);
+    fetch('https://pokeapi.co/api/v2/pokemon/' + pokeName.toLowerCase())
     .then(response => response.json())
     .then(data => {
         
@@ -21,21 +22,39 @@ function getPokemon(){
         let moves = [];
         let types = data.types;
         let type_name;
-        let statList = document.querySelector(".statcard>ul");
-        let statCard = document.querySelector(".statcard")
-        let image_tag = document.getElementById("pokeimg");
-        image_tag.src = data.sprites.front_default;
-        
-       
+        //let statList = parentContainer.querySelector(".statcard>ul");
+        let statCard = parentContainer.querySelector(".statcard")
+        let image_tag = parentContainer.querySelector(".img2");
         let capitalizedName = capitalizeWord(name);
-        let name_tag = document.getElementById("name").innerText = capitalizedName;
-
-
-        let type_tag = document.getElementById("type");
+        let name_tag = parentContainer.querySelector("#name").innerText = capitalizedName;
+        let type_tag = parentContainer.querySelector("#type");
+        let ability_parent = parentContainer.querySelector(".ability_parent");
+        let ability_list = parentContainer.querySelector("#ability_list");
+        let mvContainer = parentContainer.querySelector(".moveContainer");
+        let mvSelect = parentContainer.querySelector("select"); ///<---I hate you so much.
+        let statUl = document.createElement("ul");
+        statUl.classList.add("RandomUl");
         
+        
+        image_tag.src = data.sprites.front_default;
+       
+
+        console.log(ability_parent + "ability parent");
+
+        
+
+        /*
+
+        Checks to see if pokemon has two types. If it can't find the second type. The type name is the first type
+        and display on the document.
+        If it find the second type, add a "/" and the second type to the document.
+
+        Not relatetd to the problem.gh
+
+        */
         if(types[1] === undefined){
             type_name = capitalizeWord(types[0].type.name);
-            getTypeWeaknesses(types[0].type.url);
+            
         }
         else{
             type_name = capitalizeWord(types[0].type.name) + "/ "+ capitalizeWord(types[1].type.name);
@@ -44,29 +63,40 @@ function getPokemon(){
         console.log("The type name " + type_name);
         type_tag.textContent = type_name;
 
+     
+        ability_parent.innerHTML = "";
         
-       
 
-        let parent = document.getElementById("abilities")
         for(d in data.abilities){
             let currAbName = data.abilities[d].ability.name;
             let url = data.abilities[d].ability.url;
+            console.log(`Changed ability name ${currAbName}`);
             
-            
-            getAbilityDesc(url,currAbName,parent);
+            getAbilityDesc(url,currAbName,ability_parent);///<-This wasn't that hard.
 
         }
 
-       
         
-        let mvContainer = document.querySelector(".moveContainer");
-        let mvSelect = document.createElement("select")
+        
+
+
+        //// Removes the current contents of the moveContainer and MvSelect.
+        //// So none of the old moves from the previous pokemon are attached to the new pokemon the user search for
+        
+        //Note:.innerHTML = "" removes everthing inside the element when used. 
+        //resetTag function might be useful for removing certain tags for later.
         
         mvContainer.innerHTML = "";
         mvSelect.innerHTML = "";
+
+
         
+
+        //Adds the dropdown menu <select> to the moveContainer
+        mvContainer.append(mvSelect);
         
-      
+  
+
 
         for(m in data.moves){
             let currMoveName = data.moves[m].move.name;
@@ -80,9 +110,37 @@ function getPokemon(){
             
         }
 
+      
+
+    
+            mvSelect.addEventListener("change",function(){
+
+            
+                let previousCard = mvContainer.querySelector(".moveCard");
+                let selectedName = event.target.value;
+               
+                console.log(previousCard);
+                console.log(selectedName + "Name");
+                let selectedCard = mvContainer.querySelector(`[for="${selectedName}"]`);
+
+
+                console.log(selectedCard + "Selected Card");
+
+                if(previousCard != null){
+                    previousCard.className = "hiddenCard";
+                    console.log(previousCard);
+                }
+                
+                selectedCard.className = "moveCard";
+                
+                console.log(selectedName); 
+                console.log(selectedCard);
+        })
+
+    //})
+
         
         statCard.innerHTML = "";
-        let statUl = document.createElement("ul");
 
        
         for (let index = 0;index < 6;index++) {
@@ -135,6 +193,8 @@ function getPokemon(){
         })
        
     }
+
+
 
 function getMultiplyier(pokeType,parent){
 
@@ -253,9 +313,7 @@ function getMultiplyier(pokeType,parent){
 
 
 
-            /* weakTag.innerHTML = `<ul>${Object.keys(multiplier.defense).map(item =>
-                `<li>${multiplier.defense[item]}x ${item}</li>`).join("")}
-                </ul>`; */
+        
 
             ulWeakTag.append(weakTag);
             parent.append(ulWeakTag);
@@ -304,12 +362,12 @@ function resetTags(statcard) {
 function getAbilityDesc(url,abName,parentTag) {
     let desc;
 
-    console.log(parentTag.tag + "Parent");
+    console.log(parentTag + "Parent");
     //let parentTag = document.getElementById("abilities");
     abName = abName.charAt(0).toUpperCase() + abName.slice(1);
     abName = abName.replace("-"," ");
-    resetTags(parentTag);
-    
+    //resetTags(parentTag);
+    parentTag.innerHTML = "";
     fetch(url)
         .then(response => response.json())
         .then(data2 => {
@@ -350,58 +408,7 @@ function getAbilityDesc(url,abName,parentTag) {
         });
 }
 
-function getTypeWeaknesses(type_url, type2_url){
 
-    let weaknesses;
-
-    console.log("Type Weaknesses");
-    fetch(type_url)
-    .then(response => response.json())
-    .then(typeData =>{
-
-        
-        weaknesses = typeData.damage_relations;
-        let double = weaknesses.double_damage_from;
-        let half = weaknesses.half_damage_from;
-        let none = weaknesses.no_damage_from;
-
-
-        if(type2_url !== undefined)
-        {
-            fetch(type2_url)
-            .then(response =>response.json())
-            .then(typeData2 =>{
-
-                let weaknesses2 = typeData2;
-                let double2 = weaknesses2.double_damage_from;
-                let half2 = weaknesses2.half_damage_from;
-                let none2 = weaknesses2.no_damage_from;
-
-
-
-                let double_str = "2X Weakness: "
-                let half_str ="1/2 Resistance: ";
-                let none_str = "Immune: ";
-        
-                double_str = printTypeWeakness(double, double_str);
-                half_str = printTypeWeakness(half, half_str);
-                none_str = printTypeWeakness(none, none_str);
-
-            })
-        }
-
-       
-
-
-        //double = double.filter(type => type.name ==="bug");
-
-
-        
-        //console.log(double_str);
-        //console.log(half_str);
-        //console.log(none_str);
-    })
-}
 
 function printTypeWeakness(half, half_str) {
     for (let index = 0; index < half.length; index++) {
@@ -422,53 +429,65 @@ function printTypeWeakness(half, half_str) {
     return half_str;
 }
 
+
 function getMoveDesc(url,mvName,moveContainer,select){
     
    
 
-    
 
+    /*
+    moveCard is a flex box that contains all the data for that move. divMoveTag is the name of the move.
+    divDesc is the description of the move
+    divPowTag is the damage that it does
+    moveOption is one of the options in the dropdown menu. 
+    */
+
+    
     let moveCard = document.createElement("div");
     let divMoveTag = document.createElement("div");
     let divDescTag = document.createElement("div");
     let divPowTag = document.createElement("div");
-    
     let moveOption = document.createElement("option");
 
 
 
 
+    //Set the current Move Tag to current move. 
+    //Set one of the option in the drop down menu to the current move 
     divDescTag.className = "moveDesc";
     divMoveTag.textContent = mvName;
     moveOption.textContent = mvName;
     moveOption.value = mvName;
 
+
     divMoveTag.className = "moveName";
-    moveCard.className = "moveCard";
 
-    
+    //Sets the attritbute so I can find it using queryselector. Then add it to the page
+    moveCard.setAttribute("for",mvName);
     select.append(moveOption);
-    moveContainer.append(select);
-        
-   
     
-
+    
+    
+    
+    
     fetch(url)
     .then(response => response.json())
     .then(moveData => {
         
+
+        ///The move fetch 
         let move_Desc = moveData.effect_entries[0].effect;
         let effect_chance = moveData.effect_chance;
         divPowTag.textContent = 'Power: ' + moveData.power;
-
         
         
-
-
+        
+        
+        
         
         if(effect_chance !== null){
             move_Desc = move_Desc.replace("$effect_chance",String(effect_chance));
-
+            
         }
         //console.log("Description: " + moveData.effect_entries[0].effect);
         
@@ -480,30 +499,36 @@ function getMoveDesc(url,mvName,moveContainer,select){
             divDescTag.textContent = "Inflicts regular damage. Power varies inversely with the user's proportional remaining HP."
         }
         else{
-
+            
             divDescTag.textContent = move_Desc;
         }
-
-
-
         
         
-    
-        
 
+
+        /*
+        Now
+        */
+        
         divMoveTag.append(divPowTag);
         moveCard.append(divMoveTag);
         
         moveCard.append(divDescTag);
-
+        
         moveContainer.append(moveCard);
-       
+        
+        moveCard.className = "hiddenCard";////<-----
+        
+        
+        
+        
     });
-
-
-     
+    
+    
+    
     
 }
+
 
 
 
@@ -515,6 +540,23 @@ function addPokemon(){
     let name = searchTerm.value.toLowerCase();
 
     let parentHead = document.createElement("div");
+
+    let searchContainer = document.createElement("div");
+    let labelDiv = document.createElement("label");
+    let inputText = document.createElement("input")
+    let thisButton = document.createElement("button");
+
+    searchContainer.classList.add("searchContainer");
+    labelDiv.setAttribute("for","search2");
+    inputText.setAttribute("type","text");
+    thisButton.textContent = "Search Me";
+
+    
+    
+    searchContainer.append(labelDiv);
+    searchContainer.append(inputText);
+    searchContainer.append(thisButton);
+
     
     
 
@@ -523,6 +565,7 @@ function addPokemon(){
     let typeName;
 
     pokeTitle.id = "name";
+    pokeType.id = "type";
 
 
     let cardContainer = document.createElement("div");
@@ -537,10 +580,20 @@ function addPokemon(){
     parentHead.append(pokeTitle);
     parentHead.append(pokeType);
 
+    imagecard2.append(searchContainer);
     imagecard2.append(parentHead)
-    
+
+    console.log(inputText.value);
+    let ability_container = document.createElement("div");
+    ability_container.className = "ability_parent";
+    let ul2 = document.createElement("ul");
+    ul2.id = "ability_list";
 
     
+
+    thisButton.addEventListener("click", function(){
+        changePokemon(inputText.value,cardContainer)}
+        );
     fetch('https://pokeapi.co/api/v2/pokemon/'+name)
     .then(response => response.json())
     .then(data => {
@@ -570,8 +623,9 @@ function addPokemon(){
         abilTitle.textContent = "Abilities";
         imagecard2.append(abilTitle);
 
-        let ul2 = document.createElement("ul");
-        imagecard2.append(ul2);
+     
+        ability_container.append(ul2);
+        imagecard2.append(ability_container);
 
         for(d in data.abilities){
             let currAbName = data.abilities[d].ability.name;
@@ -591,6 +645,8 @@ function addPokemon(){
 
         let mvSelect2 = document.createElement("select");
 
+        moveContainer2.append(mvSelect2);
+
         for(m in data.moves){
             let currMoveName = data.moves[m].move.name;
             let murl = data.moves[m].move.url;
@@ -604,10 +660,29 @@ function addPokemon(){
             
         }
 
+        mvSelect2.addEventListener("change",function(){
+
+            
+            let previousCard = moveContainer2.querySelector(".moveCard");
+            let selectedName = event.target.value;
+            let selectedCard = moveContainer2.querySelector(`.hiddenCard[for="${selectedName}"]`);
+
+            if(previousCard != null){
+                previousCard.className = "hiddenCard";
+                console.log(previousCard);
+            }
+            
+            selectedCard.className = "moveCard";
+            
+            console.log(selectedName); 
+            console.log(selectedCard);
+    })
+
         cardContainer.append(imagecard2);
 
         
         let stCard = document.createElement("div");
+        stCard.className = "statcard";
         let statUl = document.createElement("ul");
         
         
@@ -674,8 +749,8 @@ function addPokemon(){
 
 
 
-let searchButton = document.querySelector("#searchButton");
+//let searchButton = document.querySelector("#searchButton");
 let addButton = document.querySelector("#addButton");
 
-searchButton.addEventListener("click",getPokemon);
+//searchButton.addEventListener("click",getPokemon);
 addButton.addEventListener("click",addPokemon);
